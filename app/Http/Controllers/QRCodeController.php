@@ -2,46 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class QRCodeController extends Controller
 {
-    // Menampilkan halaman untuk generate QR Code
-     public function showForm()
+    public function showForm()
     {
-        return view('generate_qrcode');
+        // Pass the logged-in user's ID to the view
+        $idKaryawan = Auth::user()->id_karyawan ?? 'Unknown ID';
+        return view('qr.generate', compact('idKaryawan'));
     }
 
-    // Menghasilkan QR Code
-    public function generateQRCode(Request $request)
+    public function generate()
     {
-        $qrCode = QrCode::size(300)->generate($id_karyawan);
+        // Fetch the logged-in user's ID
+        $idKaryawan = Auth::user()->id_karyawan ?? 'Unknown ID';
 
-        return response($qrCode, 200, ['Content-Type' => 'image/svg+xml']);
-    }
+        // Generate the QR code
+        $qrcode = QrCode::format('png')->size(200)->generate($idKaryawan);
+        $base64 = base64_encode($qrcode);
 
-    // Menampilkan halaman scan QR Code
-    public function scan()
-    {
-         $validatedData = $request->validate([
-            'data' => 'required|integer',
+        // Pass the generated QR code to the view
+        return view('generate_qrcode', [
+            'idKaryawan' => $idKaryawan,
+            'qrcode' => $base64,
         ]);
-
-        $idKaryawan = $validatedData['data'];
-        $presensiUrl = url('/presensi'.$idKaryawan);
-        $code = time();
-
-        // You can adjust the format to your needs 
-        // (available formats: png, eps, and svg)
-        // Additionally, you can set the QR image size in pixels using ->size(sizeInPixels, e.g., 100).
-        // Example: QrCode::format('png')->size(100)->generate($request->link);
-        $qr = QrCode::format('png')->generate($request->link);
-        $qrImageName = $code . '.png';
-
-        // Save the QR code image to local storage
-        Storage::put('public/qr/' . $qrImageName, $qr);
-
-        return view('qr.scan'); // Pastikan file `scan.blade.php` tersedia di direktori `resources/views/qr`
     }
 }

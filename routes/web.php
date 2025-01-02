@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Middleware\UserAccess;
 
 
+
 Route::middleware(['guest'])->group(function () {
     Route::get('/', [LoginController::class, 'index'])->name('login');
     Route::post('/', [LoginController::class, 'login']);
