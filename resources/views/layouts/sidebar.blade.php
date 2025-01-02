@@ -10,7 +10,7 @@
         </a>
         </li>
         <li class="nav-item mb-3">
-        <a href="{{ route('qrcode.form') }}" class="nav-link text-white text-decoration-none">
+        <a href="{{ route('qr-form') }}" class="nav-link text-white text-decoration-none">
             <i class="fas fa-list"></i> <span> Generate Qr Code</span>
         </a>
         </li>

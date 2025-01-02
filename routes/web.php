@@ -18,7 +18,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pegawai', [UserController::class, 'index'])->name('pegawai')->middleware('userAccess:pegawai');
     Route::get('/logout', [LoginController::class, 'logout']);
 
-    Route::get('/generate-qrcode', [QRCodeController::class, 'showForm'])->name('qrcode.form');
+    Route::get('/generate-qrcode', [QRCodeController::class, 'showForm'])->name('qr-form');
     Route::post('/generate-qrcode', [QRCodeController::class, 'generate'])->name('qrcode.generate');    
 });
 
