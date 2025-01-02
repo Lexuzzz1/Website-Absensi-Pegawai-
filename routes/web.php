@@ -18,7 +18,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pegawai', [UserController::class, 'index'])->name('pegawai')->middleware('userAccess:pegawai');
     Route::get('/logout', [LoginController::class, 'logout']);
 
-    Route::get('/generate-qrcode', [QRCodeController::class, 'showForm'])->name('qr-form');
+    Route::get('/generate-qrcode', [QRCodeController::class, 'showForm'])->name('qr.form');
     Route::post('/generate-qrcode', [QRCodeController::class, 'generate'])->name('qrcode.generate');    
 });
 
@@ -27,9 +27,6 @@ Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi.index
 
 // Route untuk menyimpan data absensi manual
 Route::post('/absensi/store', [AbsensiController::class, 'store'])->name('absensi.store');
-
-// Route untuk Isi Form QR
-Route::get('/generate',[QRCodeController::class, 'showGenerateForm'])->name('qrCode.Form');
 
 // Route untuk scan QR Code
 Route::get('/scan', [QRCodeController::class, 'scan'])->name('absensi.scan');
