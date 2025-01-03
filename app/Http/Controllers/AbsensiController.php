@@ -24,40 +24,54 @@ class AbsensiController extends Controller
     }
 
     // Fungsi untuk presensi berdasarkan QR Code
-    public function presensi($id_karyawan)
+   public function presensi($id_karyawan)
     {
         try {
-            // Periksa apakah presensi sudah ada hari ini
+            // Get today's date
             $today = now()->toDateString();
+
+            // Check if presensi already exists for today
             $existingPresensi = Absensi::where('id_karyawan', $id_karyawan)
                 ->whereDate('waktu_masuk', $today)
                 ->first();
 
             if ($existingPresensi) {
+                // Update the waktu_keluar for the existing record
+                $existingPresensi->update([
+                    'waktu_keluar' => now(),
+                ]);
+
                 return view('qr.success', [
-                    'message' => 'Anda sudah melakukan presensi hari ini.',
+                    'message' => 'Presensi waktu keluar berhasil diperbarui!',
                 ]);
             }
 
-            // Catat presensi baru
+            // If no presensi exists for today, create a new one
             Absensi::create([
+                'absensi_id' => Absensi::generateAbsensiId(), // Ensure auto-generated ID
                 'id_karyawan' => $id_karyawan,
                 'waktu_masuk' => now(),
+                'waktu_keluar' => now(), // Default null for waktu_keluar
                 'jenis_presensi' => 'Masuk',
                 'status' => 'Hadir',
-                'approval' => null,
+                'approval' => FALSE,
             ]);
 
             return view('qr.success', [
                 'message' => 'Presensi berhasil dicatat!',
             ]);
         } catch (\Exception $e) {
+            // Log the error
             Log::error('Error during presensi for karyawan ' . $id_karyawan . ': ' . $e->getMessage());
+
+            // Pass the error message to the view
             return view('qr.success', [
                 'message' => 'Terjadi kesalahan saat mencatat presensi.',
+                'error' => $e->getMessage(),
             ]);
         }
     }
+
 
     // Fungsi untuk menyimpan data absensi manual
     public function store(Request $request)

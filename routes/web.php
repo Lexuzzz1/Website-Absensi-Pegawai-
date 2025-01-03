@@ -20,7 +20,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/logout', [LoginController::class, 'logout']);
 
     Route::get('/generate-qrcode', [QRCodeController::class, 'showForm'])->name('qr.form');
-    Route::post('/generate-qrcode', [QRCodeController::class, 'generate'])->name('qrcode.generate');    
+    Route::get('/qr-scanner', [QRCodeController::class, 'scan'])->name('qr.scanner');
 });
 
 // Route untuk menampilkan daftar absensi
@@ -36,7 +36,7 @@ Route::get('/scan', [QRCodeController::class, 'scan'])->name('absensi.scan');
 Route::post('/generate/qr', [QRCodeController::class, 'generateQRCode'])->name('qrCode.generateQRCode');
 
 // Route untuk presensi melalui QR Code
-Route::get('/presensi', [AbsensiController::class, 'presensi'])->name('absensi.presensi');
+Route::get('/presensi/{id_karyawan}', [AbsensiController::class, 'presensi'])->name('absensi.presensi');
 
 //route untuk melakukan scanner qe code
 Route::get('/qr-scanner', function () {

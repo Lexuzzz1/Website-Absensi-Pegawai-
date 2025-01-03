@@ -1,68 +1,102 @@
-@extends('layouts.app')
+@extends('layouts.master')
 
-@section('content')
+@section('web-content')
+<div class="container mt-5">
+    <h1>QR Code Scanner</h1>
 
-<div class="container">
-    <!-- Title -->
-    <div class="text-center mb-5">
-        <h1 class="display-4 text-primary">Scan QR Code</h1>
-        <p class="lead text-muted">Arahkan kamera Anda ke QR Code untuk memulai presensi.</p>
+    <!-- Camera Selector -->
+    <div class="mb-3">
+        <label for="camera-select" class="form-label">Select Camera</label>
+        <select id="camera-select" class="form-select">
+            <option value="" disabled selected>Detecting cameras...</option>
+        </select>
     </div>
 
+    <!-- QR Code Reader -->
+    <div id="reader" style="width: 300px; height: 300px; margin: auto;"></div>
 
-    <!-- Display QR Code for scanning -->
-    <div class="text-center mt-4">
-        <h4>QR Code Absensi:</h4>
-        <div class="qr-code-display">
-            {!! QrCode::size(300)->generate(route('absensi.store')); !!}
-        </div>
-    </div>
+    <!-- Include Html5Qrcode Library -->
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
 
-    <!-- Feedback for scanning result -->
-    <div id="result" class="text-center mt-4">
-        <h5 class="text-success" style="display: none;">Presensi berhasil tercatat!</h5>
-    </div>
-</div>
-
-@endsection
-
-@push('styles')
-    <style>
-        #reader {
-            width: 100%;
-            height: 400px;
-        }
-        .qr-code-display {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #f7f7f7;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-    </style>
-@endpush
-
-@push('scripts')
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <!-- Custom JavaScript -->
     <script>
-        function onScanSuccess(decodedText, decodedResult) {
-            // Redirect ke URL decoded dari QR Code
-            window.location.href = decodedText;
-        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const reader = new Html5Qrcode("reader");
+            const cameraSelect = document.getElementById("camera-select");
+            const resultElement = document.getElementById("result");
 
-        function onScanFailure(error) {
-            console.warn(`QR error: ${error}`);
-        }
+            // Detect Device Type
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-        const html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-            { facingMode: "environment" }, // Menggunakan kamera belakang
-            {
-                fps: 10, // Frame per detik
-                qrbox: { width: 250, height: 250 } // Ukuran kotak QR
-            },
-            onScanSuccess,
-            onScanFailure
-        );
+            // Fetch Available Cameras
+            Html5Qrcode.getCameras().then((devices) => {
+                if (devices && devices.length) {
+                    cameraSelect.innerHTML = ""; // Clear default option
+
+                    devices.forEach((device) => {
+                        const option = document.createElement("option");
+                        option.value = device.id;
+                        option.textContent = device.label || `Camera ${cameraSelect.length + 1}`;
+                        cameraSelect.appendChild(option);
+                    });
+
+                    // Automatically select a camera based on device type
+                    const preferredCamera = isMobile
+                        ? devices.find((d) => d.label.toLowerCase().includes("back")) || devices[0]
+                        : devices[0];
+
+                    if (preferredCamera) {
+                        cameraSelect.value = preferredCamera.id;
+                        cameraSelect.dispatchEvent(new Event("change")); // Trigger scanning
+                    }
+                } else {
+                    console.error("No cameras found.");
+                    alert("No cameras detected. Please connect a camera and try again.");
+                }
+            }).catch((err) => {
+                console.error("Error getting cameras:", err);
+                alert("Error detecting cameras. Please check your device permissions.");
+            });
+
+            // Start Scanning on Camera Change
+            cameraSelect.addEventListener("change", function () {
+                const cameraId = cameraSelect.value;
+
+                // Stop any existing scanner before starting a new one
+                if (reader.isScanning) {
+                    reader.stop().catch(err => console.error("Failed to stop scanner:", err));
+                }
+
+                reader.start(
+                    cameraId,
+                    {
+                        fps: 10, // Scans per second
+                        qrbox: { width: 250, height: 250 }, // Scanning box dimensions
+                    },
+                    (decodedText) => {
+                        // On successful scan
+                        resultElement.textContent = decodedText;
+                        console.log("Scanned text:", decodedText);
+
+                        // Redirect if the QR code contains a valid URL
+                        if (decodedText.startsWith('http') || decodedText.startsWith('https')) {
+                            window.location.href = decodedText;
+                        } else {
+                            alert("Scanned QR Code is not a valid URL.");
+                        }
+
+                        // Stop scanning after success (optional)
+                        reader.stop().then(() => {
+                            console.log("Scanner stopped.");
+                        }).catch(err => console.error("Failed to stop scanner:", err));
+                    },
+                    (errorMessage) => {
+                        // Handle scan errors
+                        console.warn("QR Code scan error:", errorMessage);
+                    }
+                ).catch(err => console.error("Failed to start scanner:", err));
+            });
+        });
     </script>
-@endpush
+</div>
+@endsection

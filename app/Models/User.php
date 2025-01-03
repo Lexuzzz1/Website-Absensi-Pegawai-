@@ -35,6 +35,10 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+     public function karyawan()
+    {
+        return $this->hasOne(Karyawan::class, 'email', 'email');
+    }
     /**
      * The attributes that should be cast.
      *

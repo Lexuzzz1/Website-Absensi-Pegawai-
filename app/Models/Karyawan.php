@@ -15,7 +15,7 @@ class Karyawan extends Model
 
     // Kolom yang dapat diisi
     protected $fillable = [
-        'karyawan_id',
+        'id_karyawan',
         'id_jabatan',
         'id_golongan',
         'id_departemen',
@@ -47,5 +47,10 @@ class Karyawan extends Model
     public function absensi()
     {
         return $this->hasMany(Absensi::class, 'id_karyawan', 'karyawan_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'email', 'email');
     }
 }
