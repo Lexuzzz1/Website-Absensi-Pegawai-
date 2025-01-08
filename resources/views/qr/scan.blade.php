@@ -13,26 +13,29 @@
     </div>
 
     <!-- QR Code Reader -->
-    <div id="reader" style="width: 300px; height: 300px; margin: auto;"></div>
+    <div id="reader" style="width: 300px; height: 300px; margin: auto; border: 1px solid #ccc;"></div>
+
+    <!-- Scanned Result -->
+    <div class="mt-3">
+        <h4>Scanned Result:</h4>
+        <p id="result" class="text-success"></p>
+    </div>
 
     <!-- Include Html5Qrcode Library -->
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
 
-    <!-- Custom JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const reader = new Html5Qrcode("reader");
             const cameraSelect = document.getElementById("camera-select");
             const resultElement = document.getElementById("result");
 
-            // Detect Device Type
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
             // Fetch Available Cameras
             Html5Qrcode.getCameras().then((devices) => {
-                if (devices && devices.length) {
-                    cameraSelect.innerHTML = ""; // Clear default option
+                if (devices && devices.length > 0) {
+                    cameraSelect.innerHTML = ""; // Clear default options
 
+                    // Add available cameras to the dropdown
                     devices.forEach((device) => {
                         const option = document.createElement("option");
                         option.value = device.id;
@@ -40,22 +43,15 @@
                         cameraSelect.appendChild(option);
                     });
 
-                    // Automatically select a camera based on device type
-                    const preferredCamera = isMobile
-                        ? devices.find((d) => d.label.toLowerCase().includes("back")) || devices[0]
-                        : devices[0];
-
-                    if (preferredCamera) {
-                        cameraSelect.value = preferredCamera.id;
-                        cameraSelect.dispatchEvent(new Event("change")); // Trigger scanning
-                    }
+                    // Automatically select the first camera
+                    cameraSelect.value = devices[0].id;
+                    cameraSelect.dispatchEvent(new Event("change")); // Trigger scanning
                 } else {
-                    console.error("No cameras found.");
-                    alert("No cameras detected. Please connect a camera and try again.");
+                    alert("No cameras detected. Please connect a camera.");
                 }
             }).catch((err) => {
-                console.error("Error getting cameras:", err);
-                alert("Error detecting cameras. Please check your device permissions.");
+                console.error("Camera detection failed:", err);
+                alert("Failed to detect cameras. Please check device permissions.");
             });
 
             // Start Scanning on Camera Change
@@ -70,24 +66,26 @@
                 reader.start(
                     cameraId,
                     {
-                        fps: 10, // Scans per second
-                        qrbox: { width: 250, height: 250 }, // Scanning box dimensions
+                        fps: 10, // Frames per second
+                        qrbox: { width: 250, height: 250 }, // Scanning box size
                     },
                     (decodedText) => {
-                        // On successful scan
-                        resultElement.textContent = decodedText;
+                        // Display the scanned content
                         console.log("Scanned text:", decodedText);
+                        resultElement.textContent = `Scanned Content: ${decodedText}`;
 
-                        // Redirect if the QR code contains a valid URL
-                        if (decodedText.startsWith('http') || decodedText.startsWith('https')) {
-                            window.location.href = decodedText;
-                        } else {
-                            alert("Scanned QR Code is not a valid URL.");
-                        }
-
-                        // Stop scanning after success (optional)
+                        // Stop the scanner after success
                         reader.stop().then(() => {
-                            console.log("Scanner stopped.");
+                            console.log("Scanner stopped successfully.");
+
+                            // Redirect based on the scanned content
+                            if (decodedText.startsWith('http')) {
+                                // Redirect if it's a URL
+                                window.location.href = decodedText;
+                            } else {
+                                // Handle non-URL scanned data
+                                alert(`Scanned QR Code: ${decodedText}`);
+                            }
                         }).catch(err => console.error("Failed to stop scanner:", err));
                     },
                     (errorMessage) => {

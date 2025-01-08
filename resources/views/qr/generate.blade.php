@@ -30,7 +30,7 @@
                 // Generate a QR code with a link to the presensi route
                 const qrContent = `{{ route('absensi.presensi', ['id_karyawan' => $employee->id_karyawan]) }}`;
                 const canvas = document.getElementById('qrcode');
-
+                console.log(qrContent);
                 QRCode.toCanvas(canvas, qrContent, { width: 200, height: 200 }, function (error) {
                     if (error) {
                         console.error('QR Code generation failed:', error);
